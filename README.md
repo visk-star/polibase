@@ -47,7 +47,7 @@ The party activity currently uses five broad answer perspectives: Democratic, Re
 
 ## News Feed
 
-The News tab uses Google News RSS search feeds, converted to browser-readable JSON, to fetch recent political headlines. It filters by civic topics such as immigration, tuition, student loans, healthcare, housing, climate, transportation, elections, Congress, and court decisions. The feed loads fresh results when the page opens and refreshes while the page remains open; edit `src/data/newsSources.js` to change the available topics. PoliBase links to original reporting and does not copy article text.
+The News tab combines direct RSS feeds from established publishers and filters them by civic topics such as immigration, tuition, student loans, healthcare, housing, climate, transportation, elections, Congress, and court decisions. Results are refreshed every ten minutes and the last successful feed is retained for up to 24 hours as an outage fallback. Edit `src/data/newsSources.js` to change the visible topics and `server/newsFeed.js` to adjust publishers or matching terms. PoliBase links to original reporting and does not copy article text.
 
 ## Edit Translations
 

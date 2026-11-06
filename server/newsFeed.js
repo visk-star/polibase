@@ -1,30 +1,52 @@
 const CACHE_TTL = 10 * 60 * 1000
-const cache = new Map()
+const localCache = new Map()
+
+const feeds = [
+  { source: 'NPR', url: 'https://feeds.npr.org/1014/rss.xml' },
+  { source: 'PBS NewsHour', url: 'https://www.pbs.org/newshour/feeds/rss/politics' },
+  { source: 'BBC News', url: 'https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml' },
+  { source: 'The Hill', url: 'https://thehill.com/feed/' }
+]
+
+const topicTerms = {
+  immigration: ['immigration', 'immigrant', 'migrant', 'border', 'asylum', 'deport', 'ice '],
+  tuition: ['tuition', 'college cost', 'higher education', 'university cost'],
+  'student-loans': ['student loan', 'student debt', 'loan forgiveness', 'education debt'],
+  healthcare: ['healthcare', 'health care', 'medicaid', 'medicare', 'health insurance', 'hospital'],
+  housing: ['housing', 'rent ', 'rents ', 'mortgage', 'homeless'],
+  climate: ['climate', 'emissions', 'environmental policy', 'clean energy', 'epa '],
+  transportation: ['transportation', 'public transit', 'mass transit', 'railroad', 'rail ', 'highway', 'airline', 'airport', 'bridge funding', 'electric vehicle', 'amtrak', 'aviation', 'department of transportation'],
+  elections: ['election', 'voter', 'voting', 'ballot', 'campaign', 'primary'],
+  'supreme-court': ['supreme court', 'justices', 'scotus'],
+  congress: ['congress', 'senate', 'senator', 'house ', 'lawmakers', 'capitol hill']
+}
 
 const topicQueries = {
-  latest: '(U.S. politics OR White House OR Congress OR Supreme Court OR elections) when:7d',
-  immigration: 'immigration U.S. politics when:30d',
-  tuition: 'college tuition policy U.S. when:30d',
-  'student-loans': 'student loans policy U.S. when:30d',
-  healthcare: 'healthcare policy U.S. politics when:30d',
-  housing: 'housing policy U.S. politics when:30d',
-  climate: 'climate policy U.S. politics when:30d',
-  transportation: 'transportation policy U.S. politics when:30d',
-  elections: 'U.S. elections politics when:30d',
-  'supreme-court': 'Supreme Court U.S. when:30d',
-  congress: 'U.S. Congress politics when:30d'
+  latest: 'U.S. politics Congress White House elections',
+  immigration: 'U.S. immigration border policy',
+  tuition: 'U.S. college tuition policy',
+  'student-loans': 'U.S. student loans policy',
+  healthcare: 'U.S. healthcare policy politics',
+  housing: 'U.S. housing policy politics',
+  climate: 'U.S. climate policy politics',
+  transportation: 'U.S. transportation infrastructure transit policy',
+  elections: 'U.S. elections politics',
+  'supreme-court': 'U.S. Supreme Court',
+  congress: 'U.S. Congress Senate House'
 }
 
 function decodeXml(value = '') {
   return value
     .replace(/^<!\[CDATA\[|\]\]>$/g, '')
+    .replace(/<[^>]+>/g, ' ')
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
     .replace(/&#x([\da-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
+    .replace(/&apos;|&#039;/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 
@@ -33,46 +55,90 @@ function readTag(xml, tag) {
   return decodeXml(match?.[1] || '')
 }
 
-function parseArticles(xml) {
-  return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)]
+function directArticleUrl(value) {
+  try {
+    const url = new URL(value)
+    return url.hostname.endsWith('bing.com') && url.searchParams.get('url')
+      ? url.searchParams.get('url')
+      : value
+  } catch {
+    return value
+  }
+}
+
+function parseFeed(xml, source) {
+  return [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)]
     .map((match) => {
       const item = match[1]
-      const source = readTag(item, 'source') || 'News source'
-      const rawTitle = readTag(item, 'title')
-      const suffix = ` - ${source}`
-
       return {
-        title: rawTitle.endsWith(suffix) ? rawTitle.slice(0, -suffix.length) : rawTitle,
-        url: readTag(item, 'link'),
-        publishedAt: readTag(item, 'pubDate'),
-        source
+        title: readTag(item, 'title'),
+        url: directArticleUrl(readTag(item, 'link') || readTag(item, 'guid')),
+        publishedAt: readTag(item, 'pubDate') || readTag(item, 'dc:date'),
+        description: readTag(item, 'description'),
+        source: readTag(item, 'News:Source') || source
       }
     })
     .filter((article) => article.title && article.url)
-    .slice(0, 40)
+}
+
+function uniqueArticles(articles) {
+  const seen = new Set()
+  return articles.filter((article) => {
+    const key = `${article.title}|${article.url}`.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function filterByTopic(articles, topic) {
+  if (topic === 'latest' || !topicTerms[topic]) return articles
+  const terms = topicTerms[topic]
+  return articles.filter((article) => {
+    const searchable = `${article.title} ${article.description}`.toLowerCase()
+    return terms.some((term) => searchable.includes(term))
+  })
+}
+
+async function fetchFeed(feed) {
+  const response = await fetch(feed.url, {
+    headers: { 'User-Agent': 'PoliBase/1.0 civic-news-reader' },
+    signal: AbortSignal.timeout(4000)
+  })
+  if (!response.ok) throw new Error(`${feed.source} returned ${response.status}`)
+  return parseFeed(await response.text(), feed.source)
+}
+
+async function fetchTopicFeed(topic) {
+  const url = new URL('https://www.bing.com/news/search')
+  url.search = new URLSearchParams({
+    q: topicQueries[topic] || topicQueries.latest,
+    format: 'rss',
+    setlang: 'en-US',
+    count: '30'
+  }).toString()
+
+  return fetchFeed({ source: 'News source', url: url.toString() })
 }
 
 export async function getNews(topic = 'latest') {
-  const safeTopic = Object.hasOwn(topicQueries, topic) ? topic : 'latest'
-  const cached = cache.get(safeTopic)
-
+  const safeTopic = topic === 'latest' || Object.hasOwn(topicTerms, topic) ? topic : 'latest'
+  const cached = localCache.get(safeTopic)
   if (cached && Date.now() - cached.savedAt < CACHE_TTL) return cached.articles
 
-  const googleNewsUrl = new URL('https://news.google.com/rss/search')
-  googleNewsUrl.search = new URLSearchParams({
-    q: topicQueries[safeTopic],
-    hl: 'en-US',
-    gl: 'US',
-    ceid: 'US:en'
-  }).toString()
+  const results = await Promise.allSettled([
+    ...feeds.map(fetchFeed),
+    fetchTopicFeed(safeTopic)
+  ])
+  const combined = results.flatMap((result) => result.status === 'fulfilled' ? result.value : [])
+  if (combined.length === 0) throw new Error('All news feeds failed')
 
-  const response = await fetch(googleNewsUrl, {
-    headers: { 'User-Agent': 'PoliBase/1.0 civic-news-reader' }
-  })
-  if (!response.ok) throw new Error(`Google News returned ${response.status}`)
+  const articles = uniqueArticles(filterByTopic(combined, safeTopic))
+    .sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0))
+    .slice(0, 40)
+    .map(({ description, ...article }) => article)
 
-  const articles = parseArticles(await response.text())
-  cache.set(safeTopic, { articles, savedAt: Date.now() })
+  localCache.set(safeTopic, { articles, savedAt: Date.now() })
   return articles
 }
 
@@ -82,9 +148,9 @@ export async function newsMiddleware(req, res) {
     const articles = await getNews(requestUrl.searchParams.get('topic') || 'latest')
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600')
+    res.setHeader('Cache-Control', 'public, max-age=600, stale-while-revalidate=86400')
     res.end(JSON.stringify({ articles }))
-  } catch (error) {
+  } catch {
     res.statusCode = 502
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
     res.end(JSON.stringify({ error: 'News is temporarily unavailable.' }))
