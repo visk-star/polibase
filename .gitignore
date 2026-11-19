@@ -2,3 +2,16 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Local environment files and credentials
+.env
+.env.*
+!.env.example
+
+# Vercel's local project metadata
+.vercel/
+
+# Local coverage and editor files
+coverage/
+.idea/
+.vscode/
