@@ -25,7 +25,7 @@ export default function Navbar({ activePage, language, onLanguageChange, onNavig
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+    <header className="site-nav sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         <button
           className="flex items-center gap-2 text-left"

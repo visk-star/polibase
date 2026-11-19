@@ -32,7 +32,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-civic-paper text-civic-ink">
+    <div className="site-shell min-h-screen bg-civic-paper text-civic-ink">
       <Navbar
         activePage={activePage}
         language={language}

@@ -307,3 +307,193 @@ a:focus-visible {
     padding-left: 0;
   }
 }
+
+/* Shared editorial system for the interior pages */
+.site-shell {
+  background: #f6f1e8;
+  color: #121c32;
+}
+
+.site-nav {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(10, 20, 39, 0.97);
+  color: #fff;
+  backdrop-filter: blur(14px);
+}
+
+.site-nav nav {
+  min-height: 68px;
+}
+
+.site-nav nav > button > span:first-child {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0;
+  background: transparent;
+}
+
+.site-nav nav > button span,
+.site-nav nav > div > div > button:not([aria-pressed="true"]) {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.site-nav nav > button span:first-child,
+.site-nav nav > button span.block.text-lg {
+  color: #fff;
+}
+
+.site-nav nav button {
+  border-radius: 0;
+}
+
+.site-nav nav > div:last-child > div:first-child > button {
+  position: relative;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.02em;
+}
+
+.site-nav nav > div:last-child > div:first-child > button:hover,
+.site-nav nav > div:last-child > div:first-child > button.bg-slate-900 {
+  background: transparent;
+  color: #fff;
+}
+
+.site-nav nav > div:last-child > div:first-child > button.bg-slate-900::after {
+  content: '';
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.15rem;
+  left: 0.75rem;
+  height: 2px;
+  background: #e12d39;
+}
+
+.site-nav [aria-label] {
+  border-color: rgba(255, 255, 255, 0.24);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.site-nav [aria-pressed="true"] {
+  border-radius: 0;
+  background: #e12d39;
+  color: #fff;
+}
+
+.site-shell main > section {
+  position: relative;
+  padding-top: clamp(4rem, 8vw, 7rem);
+  padding-bottom: clamp(5rem, 9vw, 8rem);
+}
+
+.site-shell main > section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: max(1rem, calc((100% - 80rem) / 2));
+  width: 4.5rem;
+  height: 0.65rem;
+  background: #e12d39;
+}
+
+.site-shell main > section > div:first-child > p:first-child,
+.site-shell main > section > p:first-child {
+  color: #cf2331;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+}
+
+.site-shell main > section h1 {
+  max-width: 62rem;
+  font-size: clamp(3rem, 7vw, 6.4rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.site-shell main > section h2 {
+  letter-spacing: -0.035em;
+}
+
+.site-shell main > section > div:first-child > p:last-child {
+  max-width: 48rem;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.75;
+}
+
+.site-shell main > section [class*="rounded-xl"],
+.site-shell main > section [class*="rounded-lg"],
+.site-shell main > section [class*="rounded-full"] {
+  border-radius: 0;
+}
+
+.site-shell main > section [class*="shadow-soft"] {
+  box-shadow: none;
+}
+
+.site-shell main > section article,
+.site-shell main > section fieldset,
+.site-shell main > section [class*="border-slate-200"][class*="bg-white"] {
+  border-color: rgba(18, 28, 50, 0.22);
+}
+
+.site-shell main > section article,
+.site-shell main > section fieldset {
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.site-shell main > section article:hover {
+  border-color: #121c32;
+  transform: translateY(-3px);
+}
+
+.site-shell main > section button:not([role="tab"]),
+.site-shell main > section a[class*="bg-"] {
+  border-radius: 0;
+  letter-spacing: 0.025em;
+}
+
+.site-shell main > section button[class*="bg-civic-blue"],
+.site-shell main > section button[class*="bg-civic-purple"],
+.site-shell main > section button[class*="bg-slate-900"] {
+  background: #121c32;
+}
+
+.site-shell main > section button[class*="bg-civic-blue"]:hover,
+.site-shell main > section button[class*="bg-civic-purple"]:hover,
+.site-shell main > section button[class*="bg-slate-900"]:hover {
+  background: #e12d39;
+}
+
+.site-shell main > section a {
+  text-underline-offset: 0.25em;
+}
+
+.site-footer {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: #0a1427;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.site-footer > div {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+@media (max-width: 767px) {
+  .site-nav > div:last-child {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: #0a1427;
+  }
+
+  .site-nav > div:last-child button {
+    border-radius: 0;
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .site-nav > div:last-child button.bg-slate-900 {
+    background: #e12d39;
+    color: #fff;
+  }
+}
